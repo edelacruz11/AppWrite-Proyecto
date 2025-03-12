@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
@@ -36,6 +37,7 @@ import io.appwrite.services.Databases;
 public class HomeFragment extends Fragment {
     private NavController navController; // <-----------------
     PostsAdapter adapter;
+    AppViewModel appViewModel;
 
     public HomeFragment() {
     }
@@ -56,6 +58,8 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle
             savedInstanceState) {
 
+        navController = Navigation.findNavController(view);
+
         RecyclerView postsRecyclerView = view.findViewById(R.id.postsRecyclerView);
         adapter = new PostsAdapter();
         postsRecyclerView.setAdapter(adapter);
@@ -71,6 +75,7 @@ public class HomeFragment extends Fragment {
         client = new Client(requireContext()).setProject(getString(R.string.APPWRITE_PROJECT_ID));
         account = new Account(client);
         Handler mainHandler = new Handler(Looper.getMainLooper());
+        appViewModel = new ViewModelProvider(requireActivity()).get(AppViewModel.class);
 
         try {
             account.get(new CoroutineCallback<>((result, error) -> {
@@ -129,8 +134,9 @@ public class HomeFragment extends Fragment {
 
         PostViewHolder(@NonNull View itemView) {
             super(itemView);
-            authorPhotoImageView = itemView.findViewById(R.id.photoImageView);
+            authorPhotoImageView = itemView.findViewById(R.id.authorPhotoImageView);
             likeImageView = itemView.findViewById(R.id.likeImageView);
+            mediaImageView = itemView.findViewById(R.id.mediaImage);
             authorTextView = itemView.findViewById(R.id.authorTextView);
             contentTextView = itemView.findViewById(R.id.contentTextView);
             numLikesTextView = itemView.findViewById(R.id.numLikesTextView);
@@ -198,6 +204,24 @@ public class HomeFragment extends Fragment {
                     throw new RuntimeException(e);
                 }
             });
+
+            // Miniatura de media
+            if (post.get("mediaUrl") != null) {
+                holder.mediaImageView.setVisibility(View.VISIBLE);
+                if ("audio".equals(post.get("mediaType").toString())) {
+                    Glide.with(requireView()).load(R.drawable.audio).centerCrop().into(holder.mediaImageView);
+                } else {
+                    Glide.with(requireView()).load(post.get("mediaUrl").toString()).centerCrop().into
+                            (holder.mediaImageView);
+                }
+                holder.mediaImageView.setOnClickListener(view -> {
+                    appViewModel.postSeleccionado.setValue(post);
+                    navController.navigate(R.id.mediaFragment);
+                });
+            } else {
+                holder.mediaImageView.setVisibility(View.GONE);
+            }
+
         }
 
         @Override
