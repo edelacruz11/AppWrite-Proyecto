@@ -15,6 +15,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -131,6 +132,7 @@ public class HomeFragment extends Fragment {
     class PostViewHolder extends RecyclerView.ViewHolder {
         ImageView authorPhotoImageView, likeImageView, mediaImageView;
         TextView authorTextView, contentTextView, numLikesTextView;
+        Button deleteButton;
 
         PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -140,6 +142,7 @@ public class HomeFragment extends Fragment {
             authorTextView = itemView.findViewById(R.id.authorTextView);
             contentTextView = itemView.findViewById(R.id.contentTextView);
             numLikesTextView = itemView.findViewById(R.id.numLikesTextView);
+            deleteButton = itemView.findViewById(R.id.deleteButton);
         }
     }
 
@@ -220,6 +223,32 @@ public class HomeFragment extends Fragment {
                 });
             } else {
                 holder.mediaImageView.setVisibility(View.GONE);
+            }
+
+            // Boton borrar
+            String postUid = post.get("uid").toString();
+            if (postUid.equals(userId)) {
+                // Si el post pertenece al usuario mostramos el boton
+                holder.deleteButton.setVisibility(View.VISIBLE);
+                holder.deleteButton.setOnClickListener(view -> {
+                    Databases databases = new Databases(client);
+                    Handler mainHandler = new Handler(Looper.getMainLooper());
+                    databases.deleteDocument(
+                            getString(R.string.APPWRITE_DATABASE_ID),
+                            getString(R.string.APPWRITE_POSTS_COLLECTION_ID),
+                            post.get("$id").toString(), // ID del documento
+                            new CoroutineCallback<>((result, error) -> {
+                                if (error != null) {
+                                    Snackbar.make(getView(), "Error al borrar: " + error.toString(), Snackbar.LENGTH_LONG).show();
+                                    return;
+                                }
+                                mainHandler.post(() -> obtenerPosts());
+                            })
+                    );
+                });
+            } else {
+                // Si el post no es del usuario, ocultamos el botón
+                holder.deleteButton.setVisibility(View.GONE);
             }
 
         }

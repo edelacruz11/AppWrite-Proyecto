@@ -79,6 +79,8 @@ public class NewPostFragment extends Fragment {
         appViewModel = new
                 ViewModelProvider(requireActivity()).get(AppViewModel.class);
 
+        appViewModel.setMediaSeleccionado(null, null);
+
         view.findViewById(R.id.camara_fotos).setOnClickListener(v ->
                 tomarFoto());
         view.findViewById(R.id.camara_video).setOnClickListener(v ->
@@ -171,6 +173,7 @@ public class NewPostFragment extends Fragment {
                             mainHandler.post(() ->
                             {
                                 navController.popBackStack();
+
                             });
                         }
                     })
@@ -288,7 +291,7 @@ public class NewPostFragment extends Fragment {
     private void tomarFoto() {
         try {
             mediaUri = FileProvider.getUriForFile(requireContext(),
-                    "com.example.socialappwrite" + ".fileprovider",
+                    "com.example.p10appwrite.fileprovider",
                     File.createTempFile("img", ".jpg",
                             requireContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES))
             );
@@ -298,7 +301,7 @@ public class NewPostFragment extends Fragment {
     private void tomarVideo() {
         try {
             mediaUri = FileProvider.getUriForFile(requireContext(),
-                    "com.example.socialappwrite" + ".fileprovider",
+                    "com.example.p10appwrite.fileprovider",
                     File.createTempFile("vid", ".mp4",
                             requireContext().getExternalFilesDir(Environment.DIRECTORY_MOVIES)));
             camaraVideos.launch(mediaUri);

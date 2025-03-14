@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<paths>
-    <external-path name="name"
-        path="Android/data/com.example.socialapp/files/" />
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-path name="name" path="Android/data/com.example.p10appwrite/files/" />
 </paths>

@@ -5,6 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardUseCompatPadding="true">
+
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -19,7 +20,8 @@
             app:srcCompat="@drawable/user" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingStart="10dp">
@@ -70,6 +72,15 @@
                     android:layout_gravity="center_vertical"
                     android:text="200K"/>
             </LinearLayout>
+
+            <!-- Botón de borrar, inicialmente oculto -->
+            <Button
+                android:id="@+id/deleteButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Borrar"
+                android:visibility="gone"
+                android:layout_marginTop="5dp"/>
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
