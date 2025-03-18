@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -153,7 +154,7 @@ public class HomeFragment extends Fragment {
     class PostViewHolder extends RecyclerView.ViewHolder {
         ImageView authorPhotoImageView, likeImageView, mediaImageView;
         TextView authorTextView, contentTextView, numLikesTextView;
-        Button deleteButton;
+        ImageButton deleteButton;
 
         PostViewHolder(@NonNull View itemView) {
             super(itemView);
