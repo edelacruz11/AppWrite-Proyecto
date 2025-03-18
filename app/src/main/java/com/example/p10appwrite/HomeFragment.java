@@ -1,15 +1,6 @@
 package com.example.p10appwrite;
 
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-import androidx.lifecycle.ViewModelProvider;
-import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
@@ -18,6 +9,14 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.navigation.NavigationView;
@@ -29,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.appwrite.Client;
+import io.appwrite.Query;
 import io.appwrite.coroutines.CoroutineCallback;
 import io.appwrite.exceptions.AppwriteException;
 import io.appwrite.models.DocumentList;
@@ -36,12 +36,17 @@ import io.appwrite.services.Account;
 import io.appwrite.services.Databases;
 
 public class HomeFragment extends Fragment {
-    private NavController navController; // <-----------------
+    private NavController navController;
     PostsAdapter adapter;
     AppViewModel appViewModel;
 
-    public HomeFragment() {
-    }
+    // Elementos del header del NavigationView
+    ImageView photoImageView;
+    TextView displayNameTextView, emailTextView;
+    Client client;
+    Account account;
+    String userId;
+    Handler mainHandler;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -49,24 +54,15 @@ public class HomeFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
-    ImageView photoImageView;
-    TextView displayNameTextView, emailTextView;
-    Client client;
-    Account account;
-    String userId;
-
     @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle
-            savedInstanceState) {
-
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         navController = Navigation.findNavController(view);
-
         RecyclerView postsRecyclerView = view.findViewById(R.id.postsRecyclerView);
         adapter = new PostsAdapter();
         postsRecyclerView.setAdapter(adapter);
-
         super.onViewCreated(view, savedInstanceState);
 
+        // Obtenemos los elementos del header del NavigationView
         NavigationView navigationView = view.getRootView().findViewById(R.id.nav_view);
         View header = navigationView.getHeaderView(0);
         photoImageView = header.findViewById(R.id.imageView);
@@ -75,57 +71,94 @@ public class HomeFragment extends Fragment {
 
         client = new Client(requireContext()).setProject(getString(R.string.APPWRITE_PROJECT_ID));
         account = new Account(client);
-        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler = new Handler(Looper.getMainLooper());
         appViewModel = new ViewModelProvider(requireActivity()).get(AppViewModel.class);
 
+        // Obtenemos la información del usuario
         try {
             account.get(new CoroutineCallback<>((result, error) -> {
                 if (error != null) {
                     error.printStackTrace();
                     return;
                 }
-                mainHandler.post(() ->
-                {
+                mainHandler.post(() -> {
                     userId = result.getId();
                     displayNameTextView.setText(result.getName().toString());
                     emailTextView.setText(result.getEmail().toString());
-                    Glide.with(requireView()).load(R.drawable.user).into(photoImageView);
-
-                    obtenerPosts(); // < - Pedir los posts tras obtener el usuario
+                    // Cargamos la foto de perfil desde la nueva colección
+                    cargarFotoPerfil(userId);
+                    // Luego obtenemos los posts
+                    obtenerPosts();
                 });
             }));
         } catch (AppwriteException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
-        view.findViewById(R.id.gotoNewPostFragmentButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                navController.navigate(R.id.newPostFragment);
-            }
-        });
+        view.findViewById(R.id.gotoNewPostFragmentButton).setOnClickListener(v ->
+                navController.navigate(R.id.newPostFragment)
+        );
     }
 
-    void obtenerPosts() {
+    /**
+     * Consulta la colección de perfiles para obtener la URL de la foto
+     * y actualiza el ImageView del header.
+     */
+    void cargarFotoPerfil(String uid) {
         Databases databases = new Databases(client);
-        Handler mainHandler = new Handler(Looper.getMainLooper());
+        ArrayList<String> queries = new ArrayList<>();
+        // Se utiliza Query.equal para evitar errores de sintaxis
+        queries.add(Query.Companion.equal("uid", uid));
         try {
             databases.listDocuments(
-                    getString(R.string.APPWRITE_DATABASE_ID), // databaseId
-                    getString(R.string.APPWRITE_POSTS_COLLECTION_ID), // collectionId
-                    new ArrayList<>(), // queries (optional)
-                    new CoroutineCallback<>((result, error) -> {
-                        if (error != null) {
-                            Snackbar.make(requireView(), "Error al obtener los posts: "
-                                    + error.toString(), Snackbar.LENGTH_LONG).show();
+                    getString(R.string.APPWRITE_DATABASE_ID),
+                    getString(R.string.APPWRITE_PROFILE_COLLECTION_ID),
+                    queries,
+                    new CoroutineCallback<>((resultPerfil, errorPerfil) -> {
+                        if (errorPerfil != null) {
+                            errorPerfil.printStackTrace();
                             return;
                         }
-                        System.out.println(result.toString());
+                        if (resultPerfil.getDocuments().size() > 0) {
+                            Map<String, Object> perfil = resultPerfil.getDocuments().get(0).getData();
+                            String urlFoto = (String) perfil.get("profilePhotoUrl");
+                            mainHandler.post(() -> {
+                                if (urlFoto != null && !urlFoto.isEmpty()) {
+                                    Glide.with(requireView()).load(urlFoto).into(photoImageView);
+                                } else {
+                                    Glide.with(requireView()).load(R.drawable.user).into(photoImageView);
+                                }
+                            });
+                        } else {
+                            mainHandler.post(() -> Glide.with(requireView()).load(R.drawable.user).into(photoImageView));
+                        }
+                    })
+            );
+        } catch (AppwriteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Método para obtener los posts (sin cambios respecto a la implementación actual)
+     */
+    void obtenerPosts() {
+        Databases databases = new Databases(client);
+        try {
+            databases.listDocuments(
+                    getString(R.string.APPWRITE_DATABASE_ID),
+                    getString(R.string.APPWRITE_POSTS_COLLECTION_ID),
+                    new ArrayList<>(),
+                    new CoroutineCallback<>((result, error) -> {
+                        if (error != null) {
+                            Snackbar.make(requireView(), "Error al obtener los posts: " + error.toString(), Snackbar.LENGTH_LONG).show();
+                            return;
+                        }
                         mainHandler.post(() -> adapter.establecerLista(result));
                     })
             );
         } catch (AppwriteException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 
@@ -151,8 +184,7 @@ public class HomeFragment extends Fragment {
 
         @NonNull
         @Override
-        public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int
-                viewType) {
+        public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             return new PostViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.viewholder_post, parent, false));
         }
 
@@ -168,7 +200,7 @@ public class HomeFragment extends Fragment {
             holder.authorTextView.setText(post.get("author").toString());
             holder.contentTextView.setText(post.get("content").toString());
 
-            // Gestion de likes
+            // Gestión de likes
             List<String> likes = (List<String>) post.get("likes");
             if (likes.contains(userId))
                 holder.likeImageView.setImageResource(R.drawable.like_on);
@@ -186,20 +218,18 @@ public class HomeFragment extends Fragment {
                 Map<String, Object> data = new HashMap<>();
                 data.put("likes", nuevosLikes);
                 try {
-
                     databases.updateDocument(
                             getString(R.string.APPWRITE_DATABASE_ID),
                             getString(R.string.APPWRITE_POSTS_COLLECTION_ID),
-                            post.get("$id").toString(), // documentId
-                            data, // data (optional)
-                            new ArrayList<>(), // permissions (optional)
+                            post.get("$id").toString(),
+                            data,
+                            new ArrayList<>(),
                             new CoroutineCallback<>((result, error) -> {
                                 if (error != null) {
                                     error.printStackTrace();
                                     return;
                                 }
-                                System.out.println("Likes actualizados:" +
-                                        result.toString());
+                                System.out.println("Likes actualizados:" + result.toString());
                                 mainHandler.post(() -> obtenerPosts());
                             })
                     );
@@ -214,8 +244,7 @@ public class HomeFragment extends Fragment {
                 if ("audio".equals(post.get("mediaType").toString())) {
                     Glide.with(requireView()).load(R.drawable.audio).centerCrop().into(holder.mediaImageView);
                 } else {
-                    Glide.with(requireView()).load(post.get("mediaUrl").toString()).centerCrop().into
-                            (holder.mediaImageView);
+                    Glide.with(requireView()).load(post.get("mediaUrl").toString()).centerCrop().into(holder.mediaImageView);
                 }
                 holder.mediaImageView.setOnClickListener(view -> {
                     appViewModel.postSeleccionado.setValue(post);
@@ -225,10 +254,9 @@ public class HomeFragment extends Fragment {
                 holder.mediaImageView.setVisibility(View.GONE);
             }
 
-            // Boton borrar
+            // Botón borrar
             String postUid = post.get("uid").toString();
             if (postUid.equals(userId)) {
-                // Si el post pertenece al usuario mostramos el boton
                 holder.deleteButton.setVisibility(View.VISIBLE);
                 holder.deleteButton.setOnClickListener(view -> {
                     Databases databases = new Databases(client);
@@ -236,7 +264,7 @@ public class HomeFragment extends Fragment {
                     databases.deleteDocument(
                             getString(R.string.APPWRITE_DATABASE_ID),
                             getString(R.string.APPWRITE_POSTS_COLLECTION_ID),
-                            post.get("$id").toString(), // ID del documento
+                            post.get("$id").toString(),
                             new CoroutineCallback<>((result, error) -> {
                                 if (error != null) {
                                     Snackbar.make(getView(), "Error al borrar: " + error.toString(), Snackbar.LENGTH_LONG).show();
@@ -247,10 +275,8 @@ public class HomeFragment extends Fragment {
                     );
                 });
             } else {
-                // Si el post no es del usuario, ocultamos el botón
                 holder.deleteButton.setVisibility(View.GONE);
             }
-
         }
 
         @Override
