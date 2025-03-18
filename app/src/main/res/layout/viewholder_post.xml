@@ -31,6 +31,16 @@
                 android:paddingStart="10dp">
 
                 <TextView
+                    android:id="@+id/repostBannerTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reposteado por..."
+                    android:visibility="gone"
+                    android:textStyle="italic"
+                    android:textColor="@color/black"
+                    android:layout_marginTop="4dp"/>
+
+                <TextView
                     android:id="@+id/authorTextView"
                     style="@style/Base.TextAppearance.AppCompat.Small"
                     android:layout_width="wrap_content"
@@ -75,6 +85,24 @@
                         android:layout_marginStart="4dp"
                         android:layout_gravity="center_vertical"
                         android:text="200K"/>
+
+                    <ImageView
+                        android:id="@+id/repostButton"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="8dp"
+                        android:src="@drawable/repost_off"
+                        android:contentDescription="Repost"
+                        android:clickable="true"
+                        android:focusable="true"/>
+
+                    <TextView
+                        android:id="@+id/numRepostsTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:layout_gravity="center_vertical"
+                        android:text="0"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
