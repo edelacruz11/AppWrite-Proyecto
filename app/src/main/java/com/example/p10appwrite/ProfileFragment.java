@@ -50,7 +50,6 @@ public class ProfileFragment extends Fragment {
     String userId;
     Handler mainHandler;
 
-    // Launcher para seleccionar imagen de la galería
     private ActivityResultLauncher<String> elegirImagenLauncher =
             registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
                 if (uri != null) {
@@ -61,7 +60,6 @@ public class ProfileFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Asegúrate de tener el layout fragment_profile.xml configurado
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
@@ -72,7 +70,6 @@ public class ProfileFragment extends Fragment {
         displayNameTextView = view.findViewById(R.id.displayNameTextView);
         emailTextView = view.findViewById(R.id.emailTextView);
 
-        // Hacemos la foto clicable para actualizarla
         photoImageView.setClickable(true);
         photoImageView.setOnClickListener(v -> seleccionarNuevaFoto());
 
@@ -90,7 +87,6 @@ public class ProfileFragment extends Fragment {
                     userId = result.getId();
                     displayNameTextView.setText(result.getName().toString());
                     emailTextView.setText(result.getEmail().toString());
-                    // Cargamos la foto actual del perfil
                     cargarFotoPerfil(userId);
                 });
             }));
@@ -100,7 +96,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private void seleccionarNuevaFoto() {
-        // Lanza el selector de imágenes
         elegirImagenLauncher.launch("image/*");
     }
 
@@ -140,7 +135,6 @@ public class ProfileFragment extends Fragment {
 
     private void actualizarFotoPerfil(String downloadUrl) throws AppwriteException {
         Databases databases = new Databases(client);
-        // Consulta el documento de perfil del usuario usando Query.equal
         ArrayList<String> queries = new ArrayList<>();
         queries.add(Query.Companion.equal("uid", userId));
         databases.listDocuments(
@@ -155,7 +149,6 @@ public class ProfileFragment extends Fragment {
                     if (resultPerfil.getDocuments().size() > 0) {
                         String docId = resultPerfil.getDocuments().get(0).getId();
                         Map<String, Object> data = new HashMap<>();
-                        // Actualizamos el campo usando el nombre definido en la colección
                         data.put("profilePhotoUrl", downloadUrl);
                         try {
                             databases.updateDocument(
@@ -217,7 +210,6 @@ public class ProfileFragment extends Fragment {
         }
     }
 
-    // Método auxiliar para convertir URI a File
     public File getFileFromUri(Context context, Uri uri) throws Exception {
         InputStream inputStream = context.getContentResolver().openInputStream(uri);
         if (inputStream == null) {

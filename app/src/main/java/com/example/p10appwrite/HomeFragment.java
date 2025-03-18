@@ -62,7 +62,6 @@ public class HomeFragment extends Fragment {
         postsRecyclerView.setAdapter(adapter);
         super.onViewCreated(view, savedInstanceState);
 
-        // Obtenemos los elementos del header del NavigationView
         NavigationView navigationView = view.getRootView().findViewById(R.id.nav_view);
         View header = navigationView.getHeaderView(0);
         photoImageView = header.findViewById(R.id.imageView);
@@ -74,7 +73,6 @@ public class HomeFragment extends Fragment {
         mainHandler = new Handler(Looper.getMainLooper());
         appViewModel = new ViewModelProvider(requireActivity()).get(AppViewModel.class);
 
-        // Obtenemos la información del usuario
         try {
             account.get(new CoroutineCallback<>((result, error) -> {
                 if (error != null) {
@@ -85,9 +83,7 @@ public class HomeFragment extends Fragment {
                     userId = result.getId();
                     displayNameTextView.setText(result.getName().toString());
                     emailTextView.setText(result.getEmail().toString());
-                    // Cargamos la foto de perfil desde la nueva colección
                     cargarFotoPerfil(userId);
-                    // Luego obtenemos los posts
                     obtenerPosts();
                 });
             }));
@@ -100,14 +96,9 @@ public class HomeFragment extends Fragment {
         );
     }
 
-    /**
-     * Consulta la colección de perfiles para obtener la URL de la foto
-     * y actualiza el ImageView del header.
-     */
     void cargarFotoPerfil(String uid) {
         Databases databases = new Databases(client);
         ArrayList<String> queries = new ArrayList<>();
-        // Se utiliza Query.equal para evitar errores de sintaxis
         queries.add(Query.Companion.equal("uid", uid));
         try {
             databases.listDocuments(
@@ -139,9 +130,6 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    /**
-     * Método para obtener los posts (sin cambios respecto a la implementación actual)
-     */
     void obtenerPosts() {
         Databases databases = new Databases(client);
         try {

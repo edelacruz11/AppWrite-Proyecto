@@ -104,7 +104,6 @@ public class RegisterFragment extends Fragment {
         Databases databases = new Databases(client);
         Map<String, Object> data = new HashMap<>();
         data.put("uid", uid);
-        // Usamos "profilePhotoUrl" para que coincida con lo que usaremos luego en las consultas
         data.put("profilePhotoUrl", null);
 
         try {
