@@ -12,7 +12,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -20,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.snackbar.Snackbar;
@@ -58,8 +58,7 @@ public class ProfileFragment extends Fragment {
             });
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_profile, container, false);
     }
 
@@ -165,6 +164,8 @@ public class ProfileFragment extends Fragment {
                                         mainHandler.post(() -> {
                                             Glide.with(requireContext()).load(downloadUrl).into(photoImageView);
                                             Snackbar.make(requireView(), "Foto de perfil actualizada", Snackbar.LENGTH_SHORT).show();
+                                            AppViewModel appViewModel = new ViewModelProvider(requireActivity()).get(AppViewModel.class);
+                                            appViewModel.profilePhotoUrl.setValue(downloadUrl);
                                         });
                                     })
                             );
@@ -196,6 +197,8 @@ public class ProfileFragment extends Fragment {
                             mainHandler.post(() -> {
                                 if (urlFoto != null && !urlFoto.isEmpty()) {
                                     Glide.with(requireContext()).load(urlFoto).into(photoImageView);
+                                    AppViewModel appViewModel = new ViewModelProvider(requireActivity()).get(AppViewModel.class);
+                                    appViewModel.profilePhotoUrl.setValue(urlFoto);
                                 } else {
                                     Glide.with(requireContext()).load(R.drawable.user).into(photoImageView);
                                 }

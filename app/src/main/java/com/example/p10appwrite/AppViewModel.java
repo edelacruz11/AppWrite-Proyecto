@@ -25,6 +25,9 @@ public class AppViewModel extends AndroidViewModel {
     public MutableLiveData<Media> mediaSeleccionado = new
             MutableLiveData<>();
 
+    public MutableLiveData<String> profilePhotoUrl = new MutableLiveData<>();
+
+
     public AppViewModel(@NonNull Application application) {
         super(application);
     }
